@@ -95,8 +95,6 @@ docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 ![image](https://github.com/user-attachments/assets/c9d34f1c-f4c7-4f7d-98a4-6c91141560fd)
 
 
-```
-
 ---
 
 ## ⚙️ Infrastructure as Code (Terraform)
