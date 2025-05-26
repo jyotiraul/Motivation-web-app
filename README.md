@@ -62,7 +62,8 @@ docker images
 docker run -p 5000:5000 motivation-web-app
 ```
 
-![image](https://github.com/user-attachments/assets/f6c9830b-c9ab-4411-96b3-070b3d6e410e)
+![image](https://github.com/user-attachments/assets/df7184d4-f838-4d0b-92c5-2f06265eec28)
+
 
 ---
 
