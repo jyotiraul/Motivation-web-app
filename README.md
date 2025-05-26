@@ -62,6 +62,8 @@ docker images
 docker run -p 5000:5000 motivation-web-app
 ```
 
+![image](https://github.com/user-attachments/assets/f6c9830b-c9ab-4411-96b3-070b3d6e410e)
+
 ---
 
 ## ☁️ Push Image to Docker Hub
