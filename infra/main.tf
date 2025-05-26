@@ -53,28 +53,28 @@ resource "aws_security_group" "motivation_sg" {
   description = "Allow SSH and web traffic"
 
   ingress {
-    from_port   = 22
+    from_port   = 22      #SSH
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port   = 80
+    from_port   = 80      #http
     to_port     = 80
-    protocol    = "http"
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port   = 5000
+    from_port   = 5000    #custom web port
     to_port     = 5000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = 0
+    from_port   = 0       #allow all outbound
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
