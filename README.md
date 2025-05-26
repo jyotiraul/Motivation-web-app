@@ -1,8 +1,3 @@
-Here is a fully formatted and production-ready `README.md` file based on your uploaded `.docx` content. This is ready to be pushed to your GitHub repo:
-
----
-
-````markdown
 # Motivation Web App
 
 A motivational web application built with Flask, containerized using Docker, and deployable on AWS with Terraform and on local Kubernetes with Minikube.
@@ -20,7 +15,10 @@ cd motivation-web-app
 
 ## 🐳 Docker Instructions
 
-### 1. Create Dockerfile (if not already present)
+### 1. Create Dockerfile
+
+![image](https://github.com/user-attachments/assets/60178976-541b-4220-b3e2-9d85246e0232)
+
 
 ### 2. Build Docker Image
 
@@ -59,7 +57,7 @@ docker push rauljyoti/motivation-web-app:latest
 
 ---
 
-## 📥 Pull and Run from Docker Hub
+## 📥 Pull and Run from Docker Hub (to check image is working or not)
 
 ```bash
 docker pull rauljyoti/motivation-web-app:latest
@@ -70,10 +68,9 @@ docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 
 ## 📷 Application Preview
 
-> *(Add your screenshot image here)*
+![image](https://github.com/user-attachments/assets/c9d34f1c-f4c7-4f7d-98a4-6c91141560fd)
 
-```md
-![App Screenshot](static/images/screenshot.png)
+
 ```
 
 ---
@@ -227,6 +224,7 @@ Open your browser and go to:
 ```text
 http://<your_ip-address>:5000/
 ```
+![image](https://github.com/user-attachments/assets/bb8c87d7-c569-4424-bcfd-193345aa3950)
 
 ---
 
@@ -260,5 +258,9 @@ kubectl get pods
 kubectl get svc
 minikube service motivation-service
 ```
+![image](https://github.com/user-attachments/assets/7ded7e80-2557-46bc-9e79-264f316401c7)
+
+---
+![image](https://github.com/user-attachments/assets/3c613999-99c6-49d1-9556-8629b2c64a8c)
 
 ---
