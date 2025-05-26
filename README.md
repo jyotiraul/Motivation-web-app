@@ -286,6 +286,7 @@ minikube service motivation-service
 ![image](https://github.com/user-attachments/assets/7ded7e80-2557-46bc-9e79-264f316401c7)
 
 ---
-![image](https://github.com/user-attachments/assets/3c613999-99c6-49d1-9556-8629b2c64a8c)
+![image](https://github.com/user-attachments/assets/2fff1c39-1300-40ea-be9d-33186780fdd4)
+
 
 ---
