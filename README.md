@@ -17,8 +17,31 @@ cd motivation-web-app
 
 ### 1. Create Dockerfile
 
-![image](https://github.com/user-attachments/assets/60178976-541b-4220-b3e2-9d85246e0232)
+```bash
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Set work directory
+WORKDIR /app
+
+# Copy requirements and install
+COPY requirements.txt /app/
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
+
+# Copy the whole project
+COPY . /app/
+
+# Expose the port Gunicorn will run on
+EXPOSE 5000
+
+# Command to run the application using Gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
+````
 
 ### 2. Build Docker Image
 
@@ -26,6 +49,7 @@ cd motivation-web-app
 docker build -t motivation-web-app .
 ```
 
+---
 ### 3. Verify Docker Image
 
 ```bash
