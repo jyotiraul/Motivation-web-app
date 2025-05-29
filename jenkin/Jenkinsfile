@@ -2,102 +2,43 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-cred')
+        EC2_PUBLIC_IP = '13.127.92.121' // Updated IP from Terraform output
         IMAGE_NAME = 'rauljyoti/motivation-web-app:latest'
-        TF_VAR_docker_image = 'rauljyoti/motivation-web-app:latest'
-    }
-
-    triggers {
-        githubPush()
     }
 
     stages {
-        stage('Check Docker') {
-            steps {
-                sh 'docker --version'
-            }
-        }
-
         stage('Clone Repo') {
             steps {
-                cleanWs()
-                git credentialsId: 'github-token',
-                    url: 'https://github.com/jyotiraul/Motivation-web-app.git',
-                    branch: 'main'
+                git url: 'https://github.com/jyotiraul/Motivation-web-app.git', branch: 'main'
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${IMAGE_NAME}")
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-cred') {
-                        docker.image("${IMAGE_NAME}").push()
+                        docker.build("${IMAGE_NAME}").push()
                     }
                 }
             }
         }
 
-        stage('Terraform Deploy Infra') {
+        stage('Deploy to EC2') {
             steps {
-                dir('infra') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credential']
-                    ]) {
-                        sh '''
-                            set -e
-                            rm -rf .terraform
-                            terraform init -input=false -upgrade
-                            terraform validate
-                            terraform plan -var="key_name=lab3" -var="docker_image=${TF_VAR_docker_image}" -out=tfplan
-                            terraform apply -auto-approve tfplan
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Deploy App to EC2') {
-            steps {
-                dir('infra') {
-                    withCredentials([
-                        [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credential'],
-                        sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'KEY')
-                    ]) {
-                        script {
-                            def ip = sh(script: "terraform output -raw static_ip", returnStdout: true).trim()
-                            echo "Static IP from Terraform: ${ip}"
-
-                            sh """
-                                ssh -o StrictHostKeyChecking=no -i $KEY ubuntu@${ip} <<EOF
-                                docker rm -f motivation-app || true
-                                docker pull ${IMAGE_NAME}
-                                docker run -d -p 5000:5000 --name motivation-app ${IMAGE_NAME}
-                                EOF
-                            """
-                        }
-                    }
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'KEY')]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i $KEY ubuntu@${EC2_PUBLIC_IP} <<EOF
+                        docker pull ${IMAGE_NAME}
+                        docker rm -f motivation-app || true
+                        docker run -d -p 5000:5000 --name motivation-app ${IMAGE_NAME}
+                        EOF
+                    """
                 }
             }
         }
     }
 
-    post {
-        success {
-            echo '✅ Pipeline succeeded!'
-        }
-        failure {
-            echo '❌ Pipeline failed!'
-        }
-        always {
-            echo '🌀 Pipeline complete.'
-        }
+    triggers {
+        githubPush() // Automatically triggers on GitHub push
     }
 }
