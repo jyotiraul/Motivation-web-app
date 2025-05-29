@@ -11,7 +11,7 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Get existing Internet Gateway (instead of creating one)
+# Get existing Internet Gateway
 data "aws_internet_gateway" "default" {
   filter {
     name   = "attachment.vpc-id"
@@ -19,10 +19,10 @@ data "aws_internet_gateway" "default" {
   }
 }
 
-# Use existing or unused subnet CIDR (update as needed)
+# Subnet (make sure CIDR does NOT conflict with existing subnets)
 resource "aws_subnet" "public_1a" {
   vpc_id                  = data.aws_vpc.default.id
-  cidr_block              = "172.31.210.0/24"  # Make sure this does NOT conflict
+  cidr_block              = "172.31.210.0/24"
   availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = true
 
@@ -45,13 +45,13 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Associate Route Table
+# Route Table Association
 resource "aws_route_table_association" "public_assoc" {
   subnet_id      = aws_subnet.public_1a.id
   route_table_id = aws_route_table.public.id
 }
 
-# Security Group
+# Security Group allowing SSH and web traffic
 resource "aws_security_group" "motivation_sg" {
   name        = "motivation-web-sg-${random_id.suffix.hex}"
   description = "Allow SSH and web traffic"
@@ -99,7 +99,7 @@ resource "aws_security_group" "motivation_sg" {
 
 # EC2 Instance
 resource "aws_instance" "motivation_app" {
-  ami                    = "ami-0f5ee92e2d63afc18"  # Ubuntu 22.04 LTS
+  ami                    = "ami-0f5ee92e2d63afc18"  # Ubuntu 22.04 LTS in ap-south-1
   instance_type          = "t3.medium"
   key_name               = "lab3"
   subnet_id              = aws_subnet.public_1a.id
@@ -118,7 +118,11 @@ resource "aws_instance" "motivation_app" {
 
 # Elastic IP for Static IP Binding
 resource "aws_eip" "static_ip" {
-  instance = aws_instance.motivation_app.id
-  vpc      = true
-  depends_on = [aws_instance.motivation_app]
+  vpc = true
+}
+
+resource "aws_eip_association" "static_ip_assoc" {
+  instance_id   = aws_instance.motivation_app.id
+  allocation_id = aws_eip.static_ip.id
+  depends_on    = [aws_instance.motivation_app]
 }

@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub-cred')
         IMAGE_NAME = 'rauljyoti/motivation-web-app:latest'
-        TF_VAR_docker_image = 'rauljyoti/motivation-web-app:latest'
+        STATIC_IP = ''  // will be set dynamically after terraform apply
     }
 
     triggers {
@@ -49,15 +49,36 @@ pipeline {
             steps {
                 dir('infra') {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credential']]) {
-                        sh '''
-                            set -e
-                            rm -rf .terraform
-                            terraform init -input=false -upgrade
-                            terraform validate
-                            terraform plan -var="key_name=lab3" -out=tfplan
-                            terraform apply -auto-approve tfplan
-                        '''
+                        script {
+                            sh '''
+                                set -e
+                                rm -rf .terraform
+                                terraform init -input=false -upgrade
+                                terraform validate
+                                terraform plan -var="key_name=lab3" -out=tfplan
+                                terraform apply -auto-approve tfplan
+                            '''
+                            // Capture the static IP from terraform output
+                            def staticIp = sh(script: "terraform output -raw static_ip", returnStdout: true).trim()
+                            env.STATIC_IP = staticIp
+                            echo "Static IP from Terraform: ${env.STATIC_IP}"
+                        }
                     }
+                }
+            }
+        }
+
+        stage('Deploy App to EC2') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'KEY')]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i \$KEY ubuntu@${env.STATIC_IP} <<EOF
+                          docker pull rauljyoti/motivation-web-app:latest
+                          docker stop motivation || true
+                          docker rm motivation || true
+                          docker run -d --name motivation -p 80:80 rauljyoti/motivation-web-app:latest
+                        EOF
+                    """
                 }
             }
         }
@@ -65,13 +86,13 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline succeeded!'
+            echo '✅ Deployment succeeded!'
         }
         failure {
-            echo '❌ Pipeline failed!'
+            echo '❌ Deployment failed!'
         }
         always {
-            echo '🌀 Pipeline execution complete.'
+            echo '🌀 Pipeline complete.'
         }
     }
 }
