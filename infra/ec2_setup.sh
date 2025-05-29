@@ -8,3 +8,4 @@ docker pull rauljyoti/motivation-web-app:latest
 docker stop motivation-web || true
 docker rm motivation-web || true
 docker run -d --name motivation-web -p 5000:5000 rauljyoti/motivation-web-app:latest
+

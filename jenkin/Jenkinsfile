@@ -22,7 +22,7 @@ pipeline {
             steps {
                 cleanWs()
                 git credentialsId: 'github-token',
-                    url: 'https://github.com/jyotiraul/sparknet-motivation-web-app.git',
+                    url: 'https://github.com/jyotiraul/Motivation-web-app.git',
                     branch: 'main'
             }
         }
