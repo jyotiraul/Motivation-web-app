@@ -6,21 +6,23 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
+# Get default VPC
 data "aws_vpc" "default" {
   default = true
 }
 
-resource "aws_internet_gateway" "default" {
-  vpc_id = data.aws_vpc.default.id
-
-  tags = {
-    Name = "motivation-igw"
+# Get existing Internet Gateway (instead of creating one)
+data "aws_internet_gateway" "default" {
+  filter {
+    name   = "attachment.vpc-id"
+    values = [data.aws_vpc.default.id]
   }
 }
 
+# Use existing or unused subnet CIDR (update as needed)
 resource "aws_subnet" "public_1a" {
   vpc_id                  = data.aws_vpc.default.id
-  cidr_block              = "172.31.100.0/24"
+  cidr_block              = "172.31.201.0/24"  # Make sure this does NOT conflict
   availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = true
 
@@ -29,12 +31,13 @@ resource "aws_subnet" "public_1a" {
   }
 }
 
+# Route Table for Internet Access
 resource "aws_route_table" "public" {
   vpc_id = data.aws_vpc.default.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.default.id
+    gateway_id = data.aws_internet_gateway.default.id
   }
 
   tags = {
@@ -42,11 +45,13 @@ resource "aws_route_table" "public" {
   }
 }
 
+# Associate Route Table
 resource "aws_route_table_association" "public_assoc" {
   subnet_id      = aws_subnet.public_1a.id
   route_table_id = aws_route_table.public.id
 }
 
+# Security Group
 resource "aws_security_group" "motivation_sg" {
   name        = "motivation-web-sg-${random_id.suffix.hex}"
   description = "Allow SSH and web traffic"
@@ -66,7 +71,7 @@ resource "aws_security_group" "motivation_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-    ingress {
+  ingress {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
@@ -92,20 +97,14 @@ resource "aws_security_group" "motivation_sg" {
   }
 }
 
+# EC2 Instance
 resource "aws_instance" "motivation_app" {
-  ami                    = "ami-0f5ee92e2d63afc18"
+  ami                    = "ami-0f5ee92e2d63afc18"  # Ubuntu 22.04 LTS
   instance_type          = "t3.medium"
-  key_name               = var.key_name
+  key_name               = "lab3"
   subnet_id              = aws_subnet.public_1a.id
   vpc_security_group_ids = [aws_security_group.motivation_sg.id]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              docker stop motivation-app || true
-              docker rm motivation-app || true
-              docker pull ${var.docker_image}
-              docker run -d --name motivation-app -p 80:80 ${var.docker_image}
-              EOF
+  user_data              = file("ec2_setup.sh")
 
   root_block_device {
     volume_size = 30
@@ -115,4 +114,11 @@ resource "aws_instance" "motivation_app" {
   tags = {
     Name = "MotivationWebApp"
   }
+}
+
+# Elastic IP for Static IP Binding
+resource "aws_eip" "static_ip" {
+  instance = aws_instance.motivation_app.id
+  vpc      = true
+  depends_on = [aws_instance.motivation_app]
 }
