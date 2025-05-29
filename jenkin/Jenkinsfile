@@ -55,7 +55,7 @@ pipeline {
                                 rm -rf .terraform
                                 terraform init -input=false -upgrade
                                 terraform validate
-                                terraform plan -var="key_name=lab3" -out=tfplan
+                                terraform plan -var="key_name=lab3" -var="docker_image=${TF_VAR_docker_image}" -out=tfplan
                                 terraform apply -auto-approve tfplan
                             '''
                             // Capture the static IP from terraform output

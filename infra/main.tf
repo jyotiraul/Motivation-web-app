@@ -118,8 +118,10 @@ resource "aws_instance" "motivation_app" {
 
 # Elastic IP for Static IP Binding
 resource "aws_eip" "static_ip" {
-  vpc = true
+  instance = aws_instance.motivation_app.id
+  domain   = "vpc"
 }
+
 
 resource "aws_eip_association" "static_ip_assoc" {
   instance_id   = aws_instance.motivation_app.id
