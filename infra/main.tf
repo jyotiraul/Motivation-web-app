@@ -22,7 +22,7 @@ data "aws_internet_gateway" "default" {
 # Use existing or unused subnet CIDR (update as needed)
 resource "aws_subnet" "public_1a" {
   vpc_id                  = data.aws_vpc.default.id
-  cidr_block              = "172.31.201.0/24"  # Make sure this does NOT conflict
+  cidr_block              = "172.31.210.0/24"  # Make sure this does NOT conflict
   availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = true
 
