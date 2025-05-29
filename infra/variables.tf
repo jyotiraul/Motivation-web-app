@@ -1,4 +1,9 @@
 variable "key_name" {
-  description = "Name of your existing EC2 Key Pair"
+  description = "SSH key name"
+  type        = string
+}
+
+variable "docker_image" {
+  description = "Docker image to deploy"
   type        = string
 }
