@@ -24,8 +24,8 @@ motivation-web-app
 │   └── deployment.yml
 |   ├── service.yml
 |   └── ingress.yml
-├── infra/
-|   └── ec2_setup.sh         # Infrastructure as Code (Terraform)
+├── infra/                   # Infrastructure as Code (Terraform)
+|   └── ec2_setup.sh         
 │   ├── main.tf
 │   ├── variables.tf
 │   └── outputs.tf
@@ -34,7 +34,7 @@ motivation-web-app
 |   └── Dockerfile          #jenkins Dockerfile
 ├── .gitignore              # Git ignore rules
 ├── Dockerfile              # Docker container- flask application
-├── requirements.txt
+├── requirements.txt    
 ├── run.py
 └── README.md
 ```
