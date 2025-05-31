@@ -1,292 +1,214 @@
-# Motivation Web App
+# Empowerment Hub
 
-A motivational web application built with Flask, containerized using Docker, and deployable on AWS with Terraform and on local Kubernetes with Minikube.
+A Flask-based Motivational Web Application implementing DevOps methodologies such as containerization, IaC, CI/CD, Kubernetes deployment, and cloud monitoring.
+
+## 🚀 Project Objective
+
+To develop, containerize, and deploy a motivational web application using modern DevOps practices:
+
+- Version Control (Git/GitHub)
+- Docker-based containerization
+- Infrastructure as Code (Terraform)
+- Kubernetes Deployment (Minikube)
+- CI/CD Pipelines (Jenkins)
+- Cloud Monitoring (AWS CloudWatch)
+
+## 🌐 Live Demo
+
+**Deployed Application:** [http://13.232.183.230:5000](http://13.232.183.230:5000)
+
+**GitHub Repository:** [sparknet-motivation-web-app](https://github.com/jyotiraul/sparknet-motivation-web-app.git)
 
 ---
 
-## 📦 Clone the Repository
+## 🧰 Tech Stack
+
+| Component        | Technology       |
+|------------------|------------------|
+| Web Framework    | Flask (Python)   |
+| UI               | HTML5, CSS3, JavaScript |
+| Containerization | Docker           |
+| Orchestration    | Kubernetes (Minikube) |
+| CI/CD            | Jenkins          |
+| IaC              | Terraform        |
+| Cloud Platform   | AWS (EC2, CloudWatch) |
+| Monitoring       | CloudWatch       |
+| VCS & IDE        | Git, GitHub, VS Code |
+
+---
+
+## 📂 Application Structure
+
+- **Home**: Landing page with motivational messaging.
+- **About**: Application overview.
+- **Quotes**: Inspirational quote collection.
+- **Blog**: Growth and self-development articles.
+- **Contact**: Feedback and suggestions form.
+
+---
+
+## 🛠️ Setup & Installation
+
+### 1️⃣ Local Setup
 
 ```bash
+# Clone the repository
 git clone https://github.com/sparknet-innovations/motivation-web-app.git
 cd motivation-web-app
-````
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the app
+python run.py
+
+# Access the app
+Visit http://127.0.0.1:5000
+```
 
 ---
 
-## 🐳 Docker Instructions
+## 🐳 Dockerization
 
-### 1. Create Dockerfile
+### Dockerfile Overview
 
-```bash
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+- **Base Image**: `python:3.10-slim`
+- **Web Server**: Gunicorn
+- **Port**: 5000
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# Set work directory
-WORKDIR /app
-
-# Copy requirements and install
-COPY requirements.txt /app/
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
-
-# Copy the whole project
-COPY . /app/
-
-# Expose the port Gunicorn will run on
-EXPOSE 5000
-
-# Command to run the application using Gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
-````
-
-### 2. Build Docker Image
+### Build & Run
 
 ```bash
+# Build Docker image
 docker build -t motivation-web-app .
-```
 
----
-### 3. Verify Docker Image
-
-```bash
-docker images
-```
-
-### 4. Run Docker Image Locally
-
-```bash
+# Run container
 docker run -p 5000:5000 motivation-web-app
 ```
 
-![image](https://github.com/user-attachments/assets/df7184d4-f838-4d0b-92c5-2f06265eec28)
-
-
----
-
-## ☁️ Push Image to Docker Hub
-
-### 1. Login to Docker
+### Docker Hub
 
 ```bash
+# Push to Docker Hub
 docker login
-```
-
-### 2. Tag and Push the Image
-
-```bash
 docker tag motivation-web-app rauljyoti/motivation-web-app:latest
 docker push rauljyoti/motivation-web-app:latest
-```
 
----
-
-## 📥 Pull and Run from Docker Hub (to check image is working or not)
-
-```bash
+# Pull and run from Docker Hub
 docker pull rauljyoti/motivation-web-app:latest
 docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 ```
 
 ---
 
-## 📷 Application Preview
+## ☸️ Kubernetes Deployment
 
-![image](https://github.com/user-attachments/assets/c9d34f1c-f4c7-4f7d-98a4-6c91141560fd)
-
-
----
-
-## ⚙️ Infrastructure as Code (Terraform)
-
-### `main.tf`
-
-```hcl
-provider "aws" {
-  region = "ap-south-1"
-}
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_internet_gateway" "default" {
-  filter {
-    name   = "attachment.vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
-resource "aws_subnet" "public_1a" {
-  vpc_id                  = data.aws_vpc.default.id
-  cidr_block              = "172.31.1.0/24"
-  availability_zone       = "ap-south-1a"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "motivation-subnet-1a"
-  }
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = data.aws_vpc.default.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = data.aws_internet_gateway.default.id
-  }
-
-  tags = {
-    Name = "motivation-public-rt"
-  }
-}
-
-resource "aws_route_table_association" "public_assoc" {
-  subnet_id      = aws_subnet.public_1a.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_security_group" "motivation_sg" {
-  name        = "motivation-web-sg"
-  description = "Allow SSH and web traffic"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_instance" "motivation_app" {
-  ami                    = "ami-0f5ee92e2d63afc18"
-  instance_type          = "t2.micro"
-  key_name               = "lab3"
-  subnet_id              = aws_subnet.public_1a.id
-  user_data              = file("ec2_setup.sh")
-  vpc_security_group_ids = [aws_security_group.motivation_sg.id]
-
-  tags = {
-    Name = "MotivationWebApp"
-  }
-}
-```
-
-### `output.tf`
-
-```hcl
-output "public_ip" {
-  value = aws_instance.motivation_app.public_ip
-}
-```
-
-### `variables.tf`
-
-```hcl
-variable "key_name" {
-  description = "Name of your existing EC2 Key Pair"
-  type        = string
-}
-```
-
-### `ec2_setup.sh`
+Ensure Minikube and Docker Desktop are running.
 
 ```bash
-#!/bin/bash
-apt-get update -y
-apt-get install -y docker.io
-systemctl start docker
-systemctl enable docker
-usermod -a -G docker ubuntu
-docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
-```
-
----
-
-## 🚀 Deploy with Terraform
-
-```bash
-cd infra
-terraform init
-terraform plan
-terraform apply
-```
-
-### 🔐 SSH into EC2
-
-```bash
-ssh -i /path/to/your-key.pem ubuntu@<public-ip>
-```
-
-### 🌐 Access the Web App
-
-Open your browser and go to:
-
-```text
-http://<your_ip-address>:5000/
-```
-![image](https://github.com/user-attachments/assets/bb8c87d7-c569-4424-bcfd-193345aa3950)
-
----
-
-## 🧪 Local Kubernetes Deployment using Minikube
-
-### Start Minikube
-
-```bash
+# Start Minikube
 minikube start
-```
 
-### Build Docker Image Inside Minikube
-
-```bash
-eval $(minikube docker-env)
-docker build -t motivation-app:latest .
-```
-
-### Apply Kubernetes Manifests
-
-```bash
+# Apply Kubernetes configs
 kubectl apply -f deployment.yml
 kubectl apply -f service.yml
 kubectl apply -f ingress.yml
-```
 
-### Verify Resources
-
-```bash
-kubectl get pods
-kubectl get svc
+# Access service
 minikube service motivation-service
 ```
-![image](https://github.com/user-attachments/assets/7ded7e80-2557-46bc-9e79-264f316401c7)
 
 ---
-![image](https://github.com/user-attachments/assets/2fff1c39-1300-40ea-be9d-33186780fdd4)
 
+## ⚙️ CI/CD with Jenkins
+
+### Jenkins Setup
+
+- Build Jenkins image:
+  ```bash
+  docker build -t my-jenkins-docker ./jenkins
+  ```
+
+- Run Jenkins container:
+  ```bash
+  docker run -d --name jenkins \
+    -p 9090:8080 -p 50000:50000 \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v jenkins_home:/var/jenkins_home \
+    my-jenkins-docker
+  ```
+
+- Access Jenkins: [http://localhost:9090](http://localhost:9090)
+
+### Plugins Required
+
+- Git Plugin
+- Docker Pipeline
+- Pipeline Utility Steps
+- AWS Credentials Plugin
+- Workspace Cleanup Plugin
+- SSH Agent Plugin
+
+### Webhook Integration with GitHub (via Ngrok)
+
+```bash
+choco install ngrok
+ngrok config add-authtoken <your_token>
+ngrok http http://localhost:9090
+```
+
+Update GitHub webhook with ngrok URL.
+
+### Jenkinsfile Configuration
+
+Create a pipeline job and use the `jenkins/Jenkinsfile`. Update:
+```groovy
+environment {
+  EC2_PUBLIC_IP = '<Your EC2 IP>'
+}
+```
 
 ---
+
+## ☁️ Infrastructure as Code (Terraform)
+
+### Files
+
+- `main.tf`: Defines infrastructure resources (EC2, CloudWatch).
+- `variables.tf`: Input variable declarations.
+- `outputs.tf`: Outputs (e.g., EC2 public IP).
+
+### Commands
+
+```bash
+terraform init       # Initialize Terraform
+terraform validate   # Validate configuration
+terraform plan       # Preview changes
+terraform apply      # Apply configuration
+```
+
+---
+
+## 📈 Monitoring & Logs
+
+AWS CloudWatch integration for:
+
+- Logs
+- Error tracking
+- Performance monitoring
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙌 Acknowledgements
+
+Inspired by self-growth and DevOps principles, this app serves as a full-stack DevOps demonstration.
