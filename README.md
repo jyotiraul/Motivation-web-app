@@ -103,7 +103,7 @@ docker login
 docker tag motivation-web-app rauljyoti/motivation-web-app:latest
 docker push rauljyoti/motivation-web-app:latest
 
-# Pull and run from Docker Hub
+# Pull and run from Docker Hub (Verify image)
 docker pull rauljyoti/motivation-web-app:latest
 docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 ```
