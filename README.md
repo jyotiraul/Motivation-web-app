@@ -179,11 +179,12 @@ terraform apply      # Apply configuration
 - SSH Agent Plugin
 
 ### Credentials Required: Dashboard-> Manage Jenkins-> Credentials ->  
- 
--dockerhub
--github-token
--aws-credentials
--ec2-ssh-key
+
+- dockerhub
+- github-token
+- aws-credentials
+- ec2-ssh-key
+
 
 ### Webhook Integration with GitHub (via Ngrok)
 
