@@ -2,22 +2,43 @@
 
 A Flask-based Motivational Web Application implementing DevOps methodologies such as containerization, IaC, CI/CD, Kubernetes deployment, and cloud monitoring.
 
-## 🚀 Project Objective
+## 📁 Project Structure
 
-To develop, containerize, and deploy a motivational web application using modern DevOps practices:
+```
+motivation-web-app
+├── app
+│   ├── __init__.py
+│   ├── routes.py
+│   ├── templates
+│   │   ├── base.html
+│   │   ├── index.html
+│   │   ├── about.html
+│   │   ├── quotes.html
+│   │   ├── blog.html
+│   │   └── contact.html
+│   └── static
+│       ├── css
+│       │   └── styles.css
+│       └── js
+├── deploy/                 # Kubernetes deployment files
+│   └── deployment.yml
+|   ├── service.yml
+|   └── ingress.yml
+├── infra/
+|   └── ec2_setup.sh         # Infrastructure as Code (Terraform)
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+├── jenkins/                # Jenkins pipeline configuration
+│   └── Jenkinsfile
+|   └── Dockerfile          #jenkins Dockerfile
+├── .gitignore              # Git ignore rules
+├── Dockerfile              # Docker container- flask application
+├── requirements.txt
+├── run.py
+└── README.md
+```
 
-- Version Control (Git/GitHub)
-- Docker-based containerization
-- Infrastructure as Code (Terraform)
-- Kubernetes Deployment (Minikube)
-- CI/CD Pipelines (Jenkins)
-- Cloud Monitoring (AWS CloudWatch)
-
-## 🌐 Live Demo
-
-**Deployed Application:** [http://13.232.183.230:5000](http://13.232.183.230:5000)
-
-**GitHub Repository:** [sparknet-motivation-web-app](https://github.com/jyotiraul/sparknet-motivation-web-app.git)
 
 ---
 
@@ -34,16 +55,6 @@ To develop, containerize, and deploy a motivational web application using modern
 | Cloud Platform   | AWS (EC2, CloudWatch) |
 | Monitoring       | CloudWatch       |
 | VCS & IDE        | Git, GitHub, VS Code |
-
----
-
-## 📂 Application Structure
-
-- **Home**: Landing page with motivational messaging.
-- **About**: Application overview.
-- **Quotes**: Inspirational quote collection.
-- **Blog**: Growth and self-development articles.
-- **Contact**: Feedback and suggestions form.
 
 ---
 
@@ -74,13 +85,7 @@ Visit http://127.0.0.1:5000
 
 ## 🐳 Dockerization
 
-### Dockerfile Overview
-
-- **Base Image**: `python:3.10-slim`
-- **Web Server**: Gunicorn
-- **Port**: 5000
-
-### Build & Run
+###  Dockerization of the Flask Application 
 
 ```bash
 # Build Docker image
@@ -124,9 +129,29 @@ minikube service motivation-service
 
 ---
 
-## ⚙️ CI/CD with Jenkins
+## ⚙️  Establishing CI/CD Workflows 
+---
 
-### Jenkins Setup
+## ☁️ Infrastructure as Code (Terraform)
+
+### Files
+
+- `main.tf`: Defines infrastructure resources (EC2, CloudWatch).
+- `variables.tf`: Input variable declarations.
+- `outputs.tf`: Outputs (e.g., EC2 public IP).
+
+### Commands
+
+```bash
+terraform init       # Initialize Terraform
+terraform validate   # Validate configuration
+terraform plan       # Preview changes
+terraform apply      # Apply configuration
+```
+
+---
+
+### CI/CD with Jenkins / Jenkins Setup 
 
 - Build Jenkins image:
   ```bash
@@ -153,6 +178,13 @@ minikube service motivation-service
 - Workspace Cleanup Plugin
 - SSH Agent Plugin
 
+### Credentials Required: Dashboard-> Manage Jenkins-> Credentials ->  
+ 
+-dockerhub
+-github-token
+-aws-credentials
+-ec2-ssh-key
+
 ### Webhook Integration with GitHub (via Ngrok)
 
 ```bash
@@ -162,33 +194,14 @@ ngrok http http://localhost:9090
 ```
 
 Update GitHub webhook with ngrok URL.
+Select project on github-> go to setting -> select webhook-> add webhook->
+Payload url & content type ->  click on add webhook 
 
 ### Jenkinsfile Configuration
 
-Create a pipeline job and use the `jenkins/Jenkinsfile`. Update:
-```groovy
-environment {
-  EC2_PUBLIC_IP = '<Your EC2 IP>'
-}
-```
+Create a pipeline job and use the `jenkins/Jenkinsfile`:
 
----
-
-## ☁️ Infrastructure as Code (Terraform)
-
-### Files
-
-- `main.tf`: Defines infrastructure resources (EC2, CloudWatch).
-- `variables.tf`: Input variable declarations.
-- `outputs.tf`: Outputs (e.g., EC2 public IP).
-
-### Commands
-
-```bash
-terraform init       # Initialize Terraform
-terraform validate   # Validate configuration
-terraform plan       # Preview changes
-terraform apply      # Apply configuration
+Click on new item-> select Pipeline -> add decription, click on  GitHub hook trigger for GITScm polling, pipeline script- add code which is present in jenkins/Jenkinsfile (Note: Copy the EC2 public IP obtained from Terraform and paste it into the EC2_PUBLIC_IP = '' field in the Jenkinsfile.) 
 ```
 
 ---
@@ -203,12 +216,5 @@ AWS CloudWatch integration for:
 
 ---
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-## 🙌 Acknowledgements
-
-Inspired by self-growth and DevOps principles, this app serves as a full-stack DevOps demonstration.
