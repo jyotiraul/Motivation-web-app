@@ -209,6 +209,7 @@ Click on new item-> select Pipeline -> add decription, click on  GitHub hook tri
 
 ## 📈 Monitoring & Logs
 
+Cloudwatch -> logs -> Log groups
 AWS CloudWatch integration for:
 
 - Logs
@@ -217,5 +218,3 @@ AWS CloudWatch integration for:
 
 ---
 
-
----
