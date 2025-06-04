@@ -5,7 +5,7 @@ pipeline {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub-cred')
         IMAGE_NAME = 'rauljyoti/motivation-web-app:latest'
         TF_VAR_docker_image = 'rauljyoti/motivation-web-app:latest'
-        EC2_PUBLIC_IP = '13.127.92.121' // Updated IP from Terraform output
+        EC2_PUBLIC_IP = '13.233.244.24' // Updated IP from Terraform output
     }
 
     stages {
