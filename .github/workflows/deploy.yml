@@ -36,7 +36,7 @@
 
     - name: Reload systemd and start Flask app
       shell: |
-        sudo systemctl daemon-reexec
-        sudo systemctl daemon-reload
-        sudo systemctl enable flaskapp
-        sudo systemctl restart flaskapp
+        systemctl daemon-reexec
+        systemctl daemon-reload
+        systemctl enable flaskapp
+        systemctl restart flaskapp
