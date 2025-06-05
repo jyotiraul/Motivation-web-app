@@ -41,4 +41,3 @@
         systemctl daemon-reload
         systemctl enable flaskapp
         systemctl restart flaskapp
-        
