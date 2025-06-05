@@ -1,43 +1,42 @@
----
-- name: Deploy Motivation Web App
-  hosts: web
-  become: true
-  tasks:
+name: Deploy to EC2 with Ansible
 
-    - name: Install required packages
-      apt:
-        name: "{{ item }}"
-        state: present
-        update_cache: yes
-      loop:
-        - git
-        - python3
-        - python3-pip
+on:
+  push:
+    branches:
+      - main
 
-    - name: Ensure latest code is pulled from GitHub
-      git:
-        repo: https://github.com/jyotiraul/Motivation-web-app.git
-        dest: /opt/motivation-app
-        version: main
-        update: yes
-        force: yes
+jobs:
+  deploy:
+    name: Deploy App via Ansible
+    runs-on: ubuntu-latest
 
-    - name: Install Python requirements
-      pip:
-        requirements: /opt/motivation-app/requirements.txt
-        executable: pip3
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Copy systemd service file
-      copy:
-        src: files/flaskapp.service
-        dest: /etc/systemd/system/flaskapp.service
-        owner: root
-        group: root
-        mode: '0644'
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
-    - name: Reload systemd and start Flask app
-      shell: |
-        systemctl daemon-reexec
-        systemctl daemon-reload
-        systemctl enable flaskapp
-        systemctl restart flaskapp
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook ansible/playbook.yml \
+            -i "${{ secrets.HOST }}," \
+            -u ${{ secrets.USER }} \
+            --private-key ~/.ssh/id_rsa
+
+      - name: Pull latest code on EC2 and restart Flask app
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+            cd /opt/motivation-app
+            git pull origin main
+            sudo systemctl restart flaskapp
+          EOF
