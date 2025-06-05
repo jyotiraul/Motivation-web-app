@@ -1,0 +1,30 @@
+name: Deploy to EC2 with Ansible
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy App via Ansible
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+      - name: Run Ansible Playbook on Remote EC2
+        run: |
+          ssh ${{ secrets.USER }}@${{ secrets.HOST }} "
+            cd /opt/motivation-app &&
+            git pull origin main &&
+            ansible-playbook -i ansible/inventory ansible/playbook.yml
+          "

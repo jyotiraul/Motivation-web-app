@@ -1,0 +1,12 @@
+[Unit]
+Description=Webhook Listener
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/webhook -hooks /etc/webhook/hooks.json -port 9000 -verbose
+WorkingDirectory=/opt/motivation-app
+Restart=always
+User=ubuntu
+
+[Install]
+WantedBy=multi-user.target

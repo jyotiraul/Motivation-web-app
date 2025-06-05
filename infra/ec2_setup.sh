@@ -9,7 +9,6 @@ systemctl enable docker
 usermod -a -G docker ubuntu
 docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 
-
 # Update and install dependencies
 apt-get install -y wget unzip
 
@@ -69,4 +68,4 @@ EOT
   -a fetch-config \
   -m ec2 \
   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
-  -s
+  -s 
