@@ -1,2 +1,2 @@
 [web]
-{{ secrets.HOST }}
+13.127.194.99 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/.ssh/deploy_key
