@@ -1,0 +1,12 @@
+[Unit]
+Description=Motivation Flask App
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/motivation-app
+ExecStart=/usr/bin/python3 run.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

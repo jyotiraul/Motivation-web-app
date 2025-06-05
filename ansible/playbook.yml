@@ -1,0 +1,41 @@
+- name: Deploy Motivation Web App
+  hosts: web
+  become: true
+  tasks:
+
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - git
+        - python3
+        - python3-pip
+
+    - name: Clone the GitHub repository
+      git:
+        repo: https://github.com/jyotiraul/Motivation-web-app.git
+        dest: /opt/motivation-app
+        version: main
+        force: yes
+
+    - name: Install Python requirements
+      pip:
+        requirements: /opt/motivation-app/requirements.txt
+        executable: pip3
+
+    - name: Copy systemd service file
+      copy:
+        src: files/flaskapp.service
+        dest: /etc/systemd/system/flaskapp.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd and start Flask app
+      shell: |
+        systemctl daemon-reexec
+        systemctl daemon-reload
+        systemctl enable flaskapp
+        systemctl restart flaskapp
