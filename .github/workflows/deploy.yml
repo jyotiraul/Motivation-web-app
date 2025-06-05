@@ -1,3 +1,4 @@
+---
 - name: Deploy Motivation Web App
   hosts: web
   become: true
