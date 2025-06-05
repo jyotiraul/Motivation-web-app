@@ -1,8 +1,8 @@
 - name: Deploy Motivation Web App
   hosts: web
   become: true
-  tasks:
 
+  tasks:
     - name: Install required packages
       apt:
         name: "{{ item }}"
