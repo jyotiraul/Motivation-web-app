@@ -5,8 +5,9 @@ After=network.target
 [Service]
 User=ubuntu
 WorkingDirectory=/opt/motivation-app
-ExecStart=/usr/bin/python3 run.py
+ExecStart=/usr/bin/python3 /opt/motivation-app/run.py
 Restart=always
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target

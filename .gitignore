@@ -14,3 +14,6 @@ __pycache__/
 # VS Code or OS-specific
 .vscode/
 .DS_Store
+
+#this is ansible documentation file 
+ansible_documentation.txt
