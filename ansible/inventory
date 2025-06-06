@@ -1,2 +1,2 @@
 [web]
-13.127.194.99 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/.ssh/deploy_key
+13.232.58.124 ansible_user=ubuntu ansible_ssh_private_key_file=/home/ubuntu/.ssh/deploy_key
