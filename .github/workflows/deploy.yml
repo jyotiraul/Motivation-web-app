@@ -17,11 +17,11 @@ jobs:
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/motivation-app:latest ./app
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/motivation-web-app:latest ./app
 
     - name: Push image to Docker Hub
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/motivation-app:latest
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/motivation-web-app:latest
 
     - name: Deploy to Kubernetes
       run: |
-        kubectl set image deployment/motivation-app motivation-app=${{ secrets.DOCKER_USERNAME }}/motivation-app:latest
+        kubectl set image deployment/motivation-web-app motivation-web-app=${{ secrets.DOCKER_USERNAME }}/motivation-web-app:latest
