@@ -22,3 +22,6 @@ ansible_documentation.txt
 #Private and public ssh key
 deploy_key
 deploy_key.pub
+
+tls.crt
+tls.key
