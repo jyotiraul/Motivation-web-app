@@ -51,11 +51,11 @@ motivation-web-app
 | Web Framework    | Flask (Python)   |
 | UI               | HTML5, CSS3, JavaScript |
 | Containerization | Docker           |
-| Orchestration    | Kubernetes (Minikube) |
-| CI/CD            | Jenkins          |
+| Orchestration    | Kubernetes (AWS EKS)|
+| CI/CD            | GitHub Actions   |
 | IaC              | Terraform        |
-| Cloud Platform   | AWS (EC2, CloudWatch) |
-| Monitoring       | CloudWatch       |
+| Cloud Platform   | AWS (EC2, EKS, Route 53) |
+| Monitoring       | Prometheus, Grafana |
 | VCS & IDE        | Git, GitHub, VS Code |
 
 ---
@@ -114,4 +114,134 @@ docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 
 ## ☸️ Deploy to Production-Level Kubernetes (EKS)
  
- 
+---
+
+## 1. Create AWS Infrastructure with Terraform
+```bash
+git clone https://github.com/jyotiraul/sparknet-motivation-web-app
+cd infra
+# run terraform commands here
+```
+
+## 2. Connect to EC2 Instance
+```bash
+ssh -i "path/to/your-key.pem" ubuntu@<EC2-PUBLIC-IP>
+```
+
+## 3. Configure AWS CLI
+```bash
+aws configure
+```
+
+## 4. Update kubeconfig for EKS Cluster
+```bash
+aws eks --region <your-region> update-kubeconfig --name <your-cluster-name>
+```
+
+## 5. Apply Deployment and Service Files
+```bash
+nano deployment.yaml
+nano service.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl get po
+kubectl get svc
+```
+
+## 6. Install NGINX Ingress Controller via Helm
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx --create-namespace \
+  --set controller.ingressClass=nginx \
+  --set controller.ingressClassResource.name=nginx
+```
+
+## 7. Apply Ingress Resource
+```bash
+nano ingress.yaml
+kubectl apply -f ingress.yaml
+kubectl get ingress
+```
+
+## 8. Set Up SSL with Let's Encrypt and cert-manager
+```bash
+kubectl create namespace cert-manager
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager --set installCRDs=true
+```
+
+## 9. Create AWS Credentials Secret for cert-manager
+```bash
+kubectl create secret generic route53-credentials-secret \
+  --namespace cert-manager \
+  --from-literal=aws_access_key_id=<YOUR_KEY_ID> \
+  --from-literal=aws_secret_access_key='<YOUR_SECRET_KEY>'
+```
+
+## 10. Apply ClusterIssuer Configuration
+```bash
+nano cluster-issuer.yaml
+kubectl apply -f cluster-issuer.yaml
+```
+
+## 11. Set A Record in Route 53
+Point your domain (e.g., `motivationapp.click`) to the Ingress `EXTERNAL-IP`.
+
+## 12. Access the Web App
+```text
+https://web.motivationapp.click/
+```
+
+## 13. Set Up Monitoring with Prometheus and Grafana
+```bash
+helm repo add stable https://charts.helm.sh/stable
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+kubectl create namespace prometheus
+helm install prometheus-stack prometheus-community/kube-prometheus-stack -n prometheus
+kubectl get pods -n prometheus
+kubectl get svc -n prometheus
+```
+
+## 14. Expose Prometheus and Grafana
+```bash
+kubectl edit svc prometheus-stack-kube-prom-prometheus -n prometheus
+kubectl edit svc prometheus-stack-grafana -n prometheus
+```
+
+## 15. Access Grafana UI
+- Get LoadBalancer IP:
+  ```bash
+  kubectl get svc -n prometheus
+  ```
+- Open Grafana in browser
+- Login: `admin / prom-operator`
+
+## 16. Import Dashboards in Grafana
+| Metric Type   | Dashboard Name                        | ID     |
+|---------------|----------------------------------------|--------|
+| CPU & Memory  | Node Exporter Full                    | 1860   |
+| Request Count | Kubernetes Cluster Monitoring         | 6417   |
+| Error Rates   | API / Web Service Monitoring          | 11074  |
+
+## 17. Sample Prometheus Queries
+
+- **Memory Usage %**
+  ```promql
+  100 - ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)
+  ```
+
+- **Network Usage**
+  ```promql
+  rate(node_network_receive_bytes_total[5m])
+  ```
+
+- **CPU Usage %**
+  ```promql
+  100 - (avg by (instance)(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+  ```
