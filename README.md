@@ -1,14 +1,14 @@
-
 # Empowerment Hub
 
-A Flask-based Motivational Web Application implementing DevOps methodologies including containerization, Infrastructure as Code (IaC), CI/CD, Kubernetes deployment, and cloud monitoring.
-
----
+A Flask-based Motivational Web Application implementing DevOps methodologies such as containerization, IaC, CI/CD, Kubernetes deployment, and cloud monitoring.
 
 ## 📁 Project Structure
 
 ```
 motivation-web-app
+├── .github
+|   ├──workflows
+|       ├──deploy.yaml
 ├── app
 │   ├── __init__.py
 │   ├── routes.py
@@ -23,24 +23,24 @@ motivation-web-app
 │       ├── css
 │       │   └── styles.css
 │       └── js
-├── deploy/                 
-│   ├── deployment.yml
-│   ├── service.yml
-│   └── ingress.yml
-├── infra/                  
-│   ├── ec2_setup.sh         
+├── certificate
+|   └── cluster-issuer.yaml
+├── k8s/                 # Kubernetes deployment files
+│   └── deployment.yml
+|   ├── service.yml
+|   └── ingress.yml
+├── infra/                   # Infrastructure as Code (Terraform)
+|   └── ec2_setup.sh         
 │   ├── main.tf
 │   ├── variables.tf
 │   └── outputs.tf
-├── jenkins/                
-│   ├── Jenkinsfile
-│   └── Dockerfile
-├── .gitignore              
-├── Dockerfile              
+├── .gitignore              # Git ignore rules
+├── Dockerfile              # Docker container- flask application
 ├── requirements.txt    
 ├── run.py
 └── README.md
 ```
+
 
 ---
 
@@ -55,54 +55,63 @@ motivation-web-app
 | CI/CD            | Jenkins          |
 | IaC              | Terraform        |
 | Cloud Platform   | AWS (EC2, CloudWatch) |
-| Monitoring       | AWS CloudWatch   |
+| Monitoring       | CloudWatch       |
 | VCS & IDE        | Git, GitHub, VS Code |
 
 ---
 
 ## 🛠️ Setup & Installation
 
-### 🔹 Local Setup
+### 1️⃣ Local Setup
 
 ```bash
+# Clone the repository
 git clone https://github.com/sparknet-innovations/motivation-web-app.git
 cd motivation-web-app
 
+# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
+# Install dependencies
 pip install -r requirements.txt
-python run.py
-```
 
-Visit: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+# Run the app
+python run.py
+
+# Access the app
+Visit http://127.0.0.1:5000
+```
 
 ---
 
 ## 🐳 Dockerization
 
-### 🔹 Build and Run
+###  Dockerization of the Flask Application 
 
 ```bash
+# Build Docker image
 docker build -t motivation-web-app .
+
+# Run container
 docker run -p 5000:5000 motivation-web-app
 ```
 
-### 🔹 Push to Docker Hub
+### Docker Hub
 
 ```bash
+# Push to Docker Hub
 docker login
 docker tag motivation-web-app rauljyoti/motivation-web-app:latest
 docker push rauljyoti/motivation-web-app:latest
-```
 
-### 🔹 Pull and Verify
-
-```bash
+# Pull and run from Docker Hub (Verify image)
 docker pull rauljyoti/motivation-web-app:latest
 docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 ```
 
 ---
 
-## 
+## ☸️ Deploy to Production-Level Kubernetes (EKS)
+ 
+ 
