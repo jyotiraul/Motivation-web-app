@@ -112,15 +112,20 @@ docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 
 ---
 
-## ☸️ Deploy to Production-Level Kubernetes (EKS)
+## Phase II: Advanced DevOps Enhancements
  
 ---
+1. Deploy to Production-Level Kubernetes (EKS)
 
 ## 1. Create AWS Infrastructure with Terraform
 ```bash
 git clone https://github.com/jyotiraul/sparknet-motivation-web-app
-cd infra
-# run terraform commands here
+cd infra   # run terraform commands here
+terraform init
+terraform validate
+terraform plan
+terraform apply
+
 ```
 
 ## 2. Connect to EC2 Instance
@@ -197,7 +202,12 @@ Point your domain (e.g., `motivationapp.click`) to the Ingress `EXTERNAL-IP`.
 https://web.motivationapp.click/
 ```
 
-## 13. Set Up Monitoring with Prometheus and Grafana
+## 13. CI/CD  using github action 
+```text
+.github/workflows/deploy.yaml 
+```
+
+## 14. Set Up Monitoring with Prometheus and Grafana
 ```bash
 helm repo add stable https://charts.helm.sh/stable
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -208,13 +218,13 @@ kubectl get pods -n prometheus
 kubectl get svc -n prometheus
 ```
 
-## 14. Expose Prometheus and Grafana
+## 15. Expose Prometheus and Grafana
 ```bash
 kubectl edit svc prometheus-stack-kube-prom-prometheus -n prometheus
 kubectl edit svc prometheus-stack-grafana -n prometheus
 ```
 
-## 15. Access Grafana UI
+## 16. Access Grafana UI
 - Get LoadBalancer IP:
   ```bash
   kubectl get svc -n prometheus
@@ -222,14 +232,14 @@ kubectl edit svc prometheus-stack-grafana -n prometheus
 - Open Grafana in browser
 - Login: `admin / prom-operator`
 
-## 16. Import Dashboards in Grafana
+## 17. Import Dashboards in Grafana
 | Metric Type   | Dashboard Name                        | ID     |
 |---------------|----------------------------------------|--------|
 | CPU & Memory  | Node Exporter Full                    | 1860   |
 | Request Count | Kubernetes Cluster Monitoring         | 6417   |
 | Error Rates   | API / Web Service Monitoring          | 11074  |
 
-## 17. Sample Prometheus Queries
+## 18. Sample Prometheus Queries
 
 - **Memory Usage %**
   ```promql
