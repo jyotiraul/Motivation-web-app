@@ -118,7 +118,6 @@ docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
 ## Phase II: Advanced DevOps Enhancements
  
 ---
-1. Deploy to Production-Level Kubernetes (EKS)
 
 ## 1. Create AWS Infrastructure with Terraform
 ```bash
