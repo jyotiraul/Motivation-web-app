@@ -25,6 +25,9 @@ motivation-web-app
 │       └── js
 ├── certificate
 |   └── cluster-issuer.yaml
+|   └── documentation
+|         └──MotivationWebApp_Phase1_Documentation.pdf 
+|         └──motivation-webapp-phase2-aws-eks.pdf   # Deployment reference for AWS EKS setup
 ├── k8s/                 # Kubernetes deployment files
 │   └── deployment.yml
 |   ├── service.yml
