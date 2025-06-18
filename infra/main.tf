@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = var.region
 }
 
 resource "random_id" "suffix" {
@@ -20,7 +20,7 @@ resource "aws_internet_gateway" "default" {
 
 resource "aws_subnet" "public_1a" {
   vpc_id                  = data.aws_vpc.default.id
-  cidr_block              = "172.31.1.0/24"
+  cidr_block              = "172.31.32.0/20"
   availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = true
 
@@ -76,12 +76,6 @@ resource "aws_security_group" "motivation_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  ingress {
-    from_port   = 9000
-    to_port     = 9000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   egress {
     from_port   = 0
@@ -103,15 +97,15 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
 # EC2 instance
 resource "aws_instance" "motivation_app" {
   ami                    = "ami-0f5ee92e2d63afc18" # Ubuntu 22.04 LTS ap-south-1
-  instance_type          = "t2.micro"
+  instance_type          = "t3.medium"
   key_name               = var.key_name
   subnet_id              = aws_subnet.public_1a.id
-# user_data              = file("ec2_setup.sh")
+  user_data              = file("ec2_setup.sh")
   vpc_security_group_ids = [aws_security_group.motivation_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_instance_profile.name
 
   root_block_device {
-    volume_size = 20
+    volume_size = 30
     volume_type = "gp2"
   }
 

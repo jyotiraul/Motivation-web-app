@@ -3,3 +3,8 @@ variable "key_name" {
   type        = string
 }
 
+variable "region" {
+  description = "AWS region where resources will be created"
+  default = "ap-south-1"
+  type        = string
+}

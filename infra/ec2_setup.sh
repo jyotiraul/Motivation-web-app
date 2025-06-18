@@ -1,71 +1,60 @@
 #!/bin/bash
-set -e
-sudo apt update -y
-apt-get install -y docker.io
 
-# Start Docker app container
-systemctl start docker
+# Update & install dependencies
+apt update -y
+apt upgrade -y
+
+# Install Docker
+apt install -y docker.io
+usermod -aG docker ubuntu
 systemctl enable docker
-usermod -a -G docker ubuntu
-docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
+systemctl start docker
 
-# Update and install dependencies
-apt-get install -y wget unzip
+# Install AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+apt install unzip -y
+unzip -q awscliv2.zip
+sudo ./aws/install
 
-# Install CloudWatch Agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb -O amazon-cloudwatch-agent.deb
-dpkg -i -E ./amazon-cloudwatch-agent.deb
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 
-# Create config directory
-mkdir -p /opt/aws/amazon-cloudwatch-agent/etc
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
 
-# Write CloudWatch Agent configuration
-cat <<EOT > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-{
-  "agent": {
-    "metrics_collection_interval": 60,
-    "run_as_user": "root"
-  },
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/var/log/syslog",
-            "log_group_name": "/motivation/app",
-            "log_stream_name": "{instance_id}",
-            "timestamp_format": "%b %d %H:%M:%S"
-          }
-        ]
-      }
-    }
-  },
-  "metrics": {
-    "append_dimensions": {
-      "InstanceId": "\${aws:InstanceId}"
-    },
-    "metrics_collected": {
-      "cpu": {
-        "measurement": ["cpu_usage_idle", "cpu_usage_user", "cpu_usage_system"],
-        "metrics_collection_interval": 60
-      },
-      "mem": {
-        "measurement": ["mem_used_percent"],
-        "metrics_collection_interval": 60
-      },
-      "disk": {
-        "measurement": ["used_percent"],
-        "metrics_collection_interval": 60,
-        "resources": ["*"]
-      }
-    }
-  }
-}
-EOT
+# Install Helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# Start CloudWatch Agent
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config \
-  -m ec2 \
-  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
-  -s 
+# Update kubeconfig for EKS
+aws eks --region ap-south-1 update-kubeconfig --name my-eks-cluster
+
+# Deploy NGINX Ingress Controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/aws/deploy.yaml
+
+# Wait for NGINX to be ready
+echo "Waiting for NGINX Ingress Controller..."
+kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx
+
+# Add Prometheus and Grafana Helm repo
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+# Create namespace for monitoring
+kubectl create namespace monitoring
+
+# Install Prometheus
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring
+
+# Install Grafana
+helm install grafana grafana/grafana \
+  --namespace monitoring \
+  --set adminPassword='admin' \
+  --set service.type=LoadBalancer
+
+# Wait for Grafana to be ready
+echo "Waiting for Grafana service..."
+kubectl rollout status deployment grafana -n monitoring
+
+echo "setup completed Successfully"
