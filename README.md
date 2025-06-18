@@ -1,17 +1,20 @@
+# CI/CD Pipeline Deployment Using Terraform, Ansible, GitHub Actions & Webhooks
 
-Deployment using terraform (AWS), ansible, github action, GitHub Webhook Listener- CI/CD
+This guide walks through the deployment of a Flask web application using Terraform, Ansible, GitHub Actions, and a GitHub Webhook listener for full CI/CD integration on AWS EC2.
 
-Step 1: 
-create ec2 using terraform and ssh to ec2
-ssh -i "C:\Users\THE SHIKSHAK\Downloads\lab3.pem" ubuntu@ip_address
+---
 
-Step 2:
-# Download Ansible playbook
-sudo apt-get update
-sudo apt-get install ansible  #install ansible 
-ansible --version  #check  version
+## 🛠️ Technologies Used
 
-Project structure look like: 
+- **Terraform**: Provision AWS EC2 instances
+- **Ansible**: Configuration management and deployment
+- **GitHub Actions**: CI/CD automation
+- **GitHub Webhooks**: Trigger deployments on push
+
+---
+
+## 📌 Project Structure
+
 /home/ubuntu/
 ├── ansible/
 │   ├── inventory
@@ -19,130 +22,183 @@ Project structure look like:
 │   └── files/
 │       └── flaskapp.service
 
-#Check file 
-(changes in run.py -- >  app.run(host='0.0.0.0', port=5000, debug=True) ) 
+---
 
-Step 3:
-inventory   (copy and paste file from local to remote (ec2 server))
-playbook.yml  (copy and paste file from local to remote (ec2 server))
-files/flaskapp.service      (create /etc/systemd/system/flaskapp.service)
+## 🚀 Deployment Steps
+
+### Step 1: Provision EC2 with Terraform
+- Run Terraform script to launch an EC2 instance.
+- SSH into EC2:
+
+```bash
+ssh -i "C:\Users\THE SHIKSHAK\Downloads\lab3.pem" ubuntu@<EC2_PUBLIC_IP>
+```
+
+---
+
+### Step 2: Install Ansible on EC2
+
+```bash
+sudo apt-get update
+sudo apt-get install ansible
+ansible --version
+```
+
+Update your Flask app to run on public IP:
+
+```python
+# run.py
+app.run(host='0.0.0.0', port=5000, debug=True)
+```
+
+---
+
+### Step 3: Copy Ansible Files to EC2
+
+Transfer the following to `/home/ubuntu/ansible`:
+- `inventory`
+- `playbook.yml`
+- `files/flaskapp.service`
+
+Deploy with Ansible:
+
+```bash
+cd ~/ansible
+ansible-playbook -i inventory playbook.yml
+```
+
+Manage the service:
+
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable flaskapp
 sudo systemctl restart flaskapp
+```
 
-## configuration of github action workflow (CI/CD)
-*************************************************
-Step 4: 
-1. Generate SSH Key (On your local machine)
+---
+
+## ⚙️ GitHub Actions Configuration (CI/CD)
+
+### Step 4: SSH Key Generation (on local machine)
+
+```bash
 ssh-keygen -t rsa -b 4096 -C "github-actions" -f deploy_key
-Note: deploy_key (private key) & deploy_key.pub (public key)
+```
 
-2. Add the Public Key to EC2
-(On your EC2 instance) : 
+- Copy `deploy_key.pub` to EC2:
+
+```bash
 cat deploy_key.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/deploy_key
+```
 
-3. Add the Private Key to GitHub Secrets
-Go to Settings > Secrets and Variables > Actions
-Add new repository secrets:
-DEPLOY_KEY → contents of deploy_key (private key)
-HOST → 13.201.32.188 (your ec2 key)
-USER → ubuntu
+### Step 5: Add GitHub Secrets
 
-Step 5:
-GitHub Actions Workflow (.github/workflows/deploy.yml) 
+In your GitHub repo:
 
-4. Create file in your repo: .github/workflows/deploy.yml
-.github/workflows/deploy.yml
+- `DEPLOY_KEY`: contents of `deploy_key`
+- `HOST`: EC2 public IP (e.g., `13.201.32.188`)
+- `USER`: `ubuntu`
 
-Step 6: 
-cd ~/ansible
-ansible-playbook -i inventory playbook.yml
+### Step 6: GitHub Actions Workflow
 
-Step 7:
-#restart the app 
-sudo systemctl daemon-reload
-sudo systemctl restart flaskapp
-sudo systemctl status flaskapp
+Create file `.github/workflows/deploy.yml` in your repo to define your deployment workflow.
 
-http://13.201.32.188:5000 
+---
 
-Note: 
-(if getting error, check is any service running-> sudo lsof -i :5000
-if yes then -> sudo kill -9 ***4)
+## 🪝 GitHub Webhook Listener
 
-if error check file location --ls /opt/motivation-app/
-sudo journalctl -u flaskapp.service -n 50 --no-pager
+### Step 7: Install Webhook on EC2
 
-************************************************************************************************************
-#Ansible pulls your latest app and redeploys it with systemd.
-
-Step 8: 
-#Install GitHub Webhook Listener 
+```bash
 sudo apt update
 sudo apt install webhook -y
+```
 
-Step 9: 
-#create hook script 
+### Step 8: Create Hook Script
+
+```bash
 sudo mkdir -p /etc/webhook
-sudo nano /etc/webhook/hooks.json (copy from - webhook_files/hooks.json)
-sudo nano /etc/webhook/deploy.sh (copy from - webhook_files/deploy.sh)
+sudo nano /etc/webhook/hooks.json     # Use content from webhook_files/hooks.json
+sudo nano /etc/webhook/deploy.sh      # Use content from webhook_files/deploy.sh
+sudo chmod +x /etc/webhook/deploy.sh
+```
 
-sudo chmod +x /etc/webhook/deploy.sh (make executable)
+### Step 9: Open Port 9000 in EC2 Security Group
 
-step 10: 
-#In your EC2 security group, open port 9000 for your IP or GitHub IP range only (for security).
-http://13.127.194.99:9000/   #running ok means service is up and running correctly.
+Verify webhook is running:
+```bash
+http://<EC2_PUBLIC_IP>:9000/
+```
 
-Step 11: 
-#add github webhook
-payload url ->  http://<YOUR_EC2_PUBLIC_IP>:9000/hooks/deploy-flask
-Content type: application/json
-Secret: Same as YourGitHubSecretHere in hooks.json  (secret will be any random key)
-Select “Just the push event” → Save
+### Step 10: Configure GitHub Webhook
 
-Step 12:
-(Recommanded)
-sudo chown -R ubuntu:ubuntu /opt/motivation-app
-cd /opt/motivation-app
-git pull origin main  #just check is it work or not. 
-        Or another option 
-add github action file in Pull latest code on EC2 and restart Flask app: git config --global --add safe.directory /opt/motivation-app
+- **Payload URL**: `http://<EC2_PUBLIC_IP>:9000/hooks/deploy-flask`
+- **Content Type**: `application/json`
+- **Secret**: Same as in `hooks.json`
+- **Event**: Just the push event
 
-Step 13:
-# Start the Webhook Listener
-: Run webhook as a systemd service (running on background)
-sudo nano /etc/systemd/system/webhook.service  (code copy from ansible/webhook_files/webhook.service)
-#then run :
+---
+
+### Step 11: Start Webhook as a Service
+
+```bash
+sudo nano /etc/systemd/system/webhook.service
+# Paste content from ansible/webhook_files/webhook.service
+
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable webhook
 sudo systemctl start webhook
 sudo systemctl status webhook
+```
 
-Step 14: 
-Make a code change in GitHub
-Push it to main
-#GitHub webhook will fire → EC2 pulls + deploys via Ansible!
+---
 
-Done. 
+## ✅ Test the CI/CD Pipeline
 
-*********************************************************************************************
-#check logs 
-/var/log/deploy.log
-tail -f /var/log/motivation-deploy.log
-sudo systemctl status flaskapp
-sudo systemctl restart flaskapp
-sudo lsof -i :5000   Note: You should see *:5000 (LISTEN) instead of localhost:5000.
+1. Push a code change to the `main` branch on GitHub.
+2. GitHub Webhook triggers EC2 deployment via Ansible.
 
+---
 
-Key scp :
-scp -i "C:\Users\THE SHIKSHAK\Downloads\lab3.pem" "C:\assignment\M
-otivation-web-app\motivation-web-app\infra\deploy_key" ubuntu@13.232.58.124:/home/ubuntu/.ssh/deploy_key
+## 🔧 Troubleshooting
 
-chmod 600 ~/.ssh/deploy_key   (ec2 private key)
+- Check service status:
+  ```bash
+  sudo systemctl status flaskapp
+  ```
+- Restart app:
+  ```bash
+  sudo systemctl restart flaskapp
+  ```
+- View logs:
+  ```bash
+  sudo journalctl -u flaskapp.service -n 50 --no-pager
+  tail -f /var/log/motivation-deploy.log
+  ```
+- Check port:
+  ```bash
+  sudo lsof -i :5000
+  ```
+- Kill conflicting process:
+  ```bash
+  sudo kill -9 <PID>
+  ```
 
+---
+
+## 🔐 Key Transfer Commands
+
+```bash
+scp -i "C:\Users\THE SHIKSHAK\Downloads\lab3.pem" "C:\assignment\Motivation-web-app\motivation-web-app\infra\deploy_key" ubuntu@<EC2_PUBLIC_IP>:/home/ubuntu/.ssh/deploy_key
+
+# Set permissions on EC2
+chmod 600 ~/.ssh/deploy_key
 cat deploy_key.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys  (ec2 public key)
+chmod 600 ~/.ssh/authorized_keys
+```
+
+---
 
