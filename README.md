@@ -15,12 +15,14 @@ This guide walks through the deployment of a Flask web application using Terrafo
 
 ## 📌 Project Structure
 
+
 /home/ubuntu/
 ├── ansible/
 │   ├── inventory
 │   ├── playbook.yml
 │   └── files/
 │       └── flaskapp.service
+
 
 ---
 
