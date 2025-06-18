@@ -1,290 +1,148 @@
-# Empowerment Hub
 
-A Flask-based Motivational Web Application implementing DevOps methodologies such as containerization, IaC, CI/CD, Kubernetes deployment, and cloud monitoring.
+Deployment using terraform (AWS), ansible, github action, GitHub Webhook Listener- CI/CD
 
-## 📁 Project Structure
+Step 1: 
+create ec2 using terraform and ssh to ec2
+ssh -i "C:\Users\THE SHIKSHAK\Downloads\lab3.pem" ubuntu@ip_address
 
-```
-motivation-web-app
-├── .github
-|   ├──workflows
-|       ├──deploy.yaml
-├── app
-│   ├── __init__.py
-│   ├── routes.py
-│   ├── templates
-│   │   ├── base.html
-│   │   ├── index.html
-│   │   ├── about.html
-│   │   ├── quotes.html
-│   │   ├── blog.html
-│   │   └── contact.html
-│   └── static
-│       ├── css
-│       │   └── styles.css
-│       └── js
-├── certificate
-|   └── cluster-issuer.yaml
-|   └── documentation
-|         └──MotivationWebApp_Phase1_Documentation.pdf 
-|         └──motivation-webapp-phase2-aws-eks.pdf   # Deployment reference for AWS EKS setup
-├── k8s/                 # Kubernetes deployment files
-│   └── deployment.yml
-|   ├── service.yml
-|   └── ingress.yml
-├── infra/                   # Infrastructure as Code (Terraform)
-|   └── ec2_setup.sh         
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-├── .gitignore              # Git ignore rules
-├── Dockerfile              # Docker container- flask application
-├── requirements.txt    
-├── run.py
-└── README.md
-```
+Step 2:
+# Download Ansible playbook
+sudo apt-get update
+sudo apt-get install ansible  #install ansible 
+ansible --version  #check  version
 
+Project structure look like: 
+/home/ubuntu/
+├── ansible/
+│   ├── inventory
+│   ├── playbook.yml
+│   └── files/
+│       └── flaskapp.service
 
----
+#Check file 
+(changes in run.py -- >  app.run(host='0.0.0.0', port=5000, debug=True) ) 
 
-## 🧰 Tech Stack
+Step 3:
+inventory   (copy and paste file from local to remote (ec2 server))
+playbook.yml  (copy and paste file from local to remote (ec2 server))
+files/flaskapp.service      (create /etc/systemd/system/flaskapp.service)
+sudo systemctl daemon-reload
+sudo systemctl enable flaskapp
+sudo systemctl restart flaskapp
 
-| Component        | Technology       |
-|------------------|------------------|
-| Web Framework    | Flask (Python)   |
-| UI               | HTML5, CSS3, JavaScript |
-| Containerization | Docker           |
-| Orchestration    | Kubernetes (AWS EKS)|
-| CI/CD            | GitHub Actions   |
-| IaC              | Terraform        |
-| Cloud Platform   | AWS (EC2, EKS, Route 53) |
-| Monitoring       | Prometheus, Grafana |
-| VCS & IDE        | Git, GitHub, VS Code |
+## configuration of github action workflow (CI/CD)
+*************************************************
+Step 4: 
+1. Generate SSH Key (On your local machine)
+ssh-keygen -t rsa -b 4096 -C "github-actions" -f deploy_key
+Note: deploy_key (private key) & deploy_key.pub (public key)
 
----
+2. Add the Public Key to EC2
+(On your EC2 instance) : 
+cat deploy_key.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/deploy_key
 
-## 🛠️ Setup & Installation
+3. Add the Private Key to GitHub Secrets
+Go to Settings > Secrets and Variables > Actions
+Add new repository secrets:
+DEPLOY_KEY → contents of deploy_key (private key)
+HOST → 13.201.32.188 (your ec2 key)
+USER → ubuntu
 
-### 1️⃣ Local Setup
+Step 5:
+GitHub Actions Workflow (.github/workflows/deploy.yml) 
 
-```bash
-# Clone the repository
-git clone https://github.com/sparknet-innovations/motivation-web-app.git
-cd motivation-web-app
+4. Create file in your repo: .github/workflows/deploy.yml
+.github/workflows/deploy.yml
 
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+Step 6: 
+cd ~/ansible
+ansible-playbook -i inventory playbook.yml
 
-# Install dependencies
-pip install -r requirements.txt
+Step 7:
+#restart the app 
+sudo systemctl daemon-reload
+sudo systemctl restart flaskapp
+sudo systemctl status flaskapp
 
-# Run the app
-python run.py
+http://13.201.32.188:5000 
 
-# Access the app
-Visit http://127.0.0.1:5000
-```
+Note: 
+(if getting error, check is any service running-> sudo lsof -i :5000
+if yes then -> sudo kill -9 ***4)
 
----
+if error check file location --ls /opt/motivation-app/
+sudo journalctl -u flaskapp.service -n 50 --no-pager
 
-## 🐳 Dockerization
+************************************************************************************************************
+#Ansible pulls your latest app and redeploys it with systemd.
 
-###  Dockerization of the Flask Application 
+Step 8: 
+#Install GitHub Webhook Listener 
+sudo apt update
+sudo apt install webhook -y
 
-```bash
-# Build Docker image
-docker build -t motivation-web-app .
+Step 9: 
+#create hook script 
+sudo mkdir -p /etc/webhook
+sudo nano /etc/webhook/hooks.json (copy from - webhook_files/hooks.json)
+sudo nano /etc/webhook/deploy.sh (copy from - webhook_files/deploy.sh)
 
-# Run container
-docker run -p 5000:5000 motivation-web-app
-```
+sudo chmod +x /etc/webhook/deploy.sh (make executable)
 
-### Docker Hub
+step 10: 
+#In your EC2 security group, open port 9000 for your IP or GitHub IP range only (for security).
+http://13.127.194.99:9000/   #running ok means service is up and running correctly.
 
-```bash
-# Push to Docker Hub
-docker login
-docker tag motivation-web-app rauljyoti/motivation-web-app:latest
-docker push rauljyoti/motivation-web-app:latest
+Step 11: 
+#add github webhook
+payload url ->  http://<YOUR_EC2_PUBLIC_IP>:9000/hooks/deploy-flask
+Content type: application/json
+Secret: Same as YourGitHubSecretHere in hooks.json  (secret will be any random key)
+Select “Just the push event” → Save
 
-# Pull and run from Docker Hub (Verify image)
-docker pull rauljyoti/motivation-web-app:latest
-docker run -d -p 5000:5000 rauljyoti/motivation-web-app:latest
-```
+Step 12:
+(Recommanded)
+sudo chown -R ubuntu:ubuntu /opt/motivation-app
+cd /opt/motivation-app
+git pull origin main  #just check is it work or not. 
+        Or another option 
+add github action file in Pull latest code on EC2 and restart Flask app: git config --global --add safe.directory /opt/motivation-app
 
----
+Step 13:
+# Start the Webhook Listener
+: Run webhook as a systemd service (running on background)
+sudo nano /etc/systemd/system/webhook.service  (code copy from ansible/webhook_files/webhook.service)
+#then run :
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable webhook
+sudo systemctl start webhook
+sudo systemctl status webhook
 
-## Phase II: Advanced DevOps Enhancements
- 
----
+Step 14: 
+Make a code change in GitHub
+Push it to main
+#GitHub webhook will fire → EC2 pulls + deploys via Ansible!
 
-## 1. Create AWS Infrastructure with Terraform
-```bash
-git clone https://github.com/jyotiraul/sparknet-motivation-web-app
-cd infra   # run terraform commands here
-terraform init
-terraform validate
-terraform plan
-terraform apply
+Done. 
 
-```
-
-## 2. Connect to EC2 Instance
-```bash
-ssh -i "path/to/your-key.pem" ubuntu@<EC2-PUBLIC-IP>
-```
-
-## 3. Configure AWS CLI
-```bash
-aws configure
-```
-
-## 4. Update kubeconfig for EKS Cluster
-```bash
-aws eks --region <your-region> update-kubeconfig --name <your-cluster-name>
-```
-
-## 5. Apply Deployment and Service Files
-```bash
-nano deployment.yaml
-nano service.yaml
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
-kubectl get po
-kubectl get svc
-```
-
-## 6. Use a custom domain with SSL 
- Register a domain- Navigate to AWS Route 53, then go to Registered Domains and click on Register Domain Select domain and click on procced to checkout.
+*********************************************************************************************
+#check logs 
+/var/log/deploy.log
+tail -f /var/log/motivation-deploy.log
+sudo systemctl status flaskapp
+sudo systemctl restart flaskapp
+sudo lsof -i :5000   Note: You should see *:5000 (LISTEN) instead of localhost:5000.
 
 
-## 7. Add cert-manager policy 
-```bash
-{ 
-  "Version": "2012-10-17", 
-  "Statement": [ 
-    { 
-      "Effect": "Allow", 
-      "Action": [ 
-        "route53:GetChange", 
-        "route53:ChangeResourceRecordSets", 
-        "route53:ListResourceRecordSets", 
-        "route53:ListHostedZones" 
-      ], 
-      "Resource": "*" 
-    } 
-  ] 
-} 
-```
+Key scp :
+scp -i "C:\Users\THE SHIKSHAK\Downloads\lab3.pem" "C:\assignment\M
+otivation-web-app\motivation-web-app\infra\deploy_key" ubuntu@13.232.58.124:/home/ubuntu/.ssh/deploy_key
 
-## 8. Set Up SSL with Let's Encrypt and cert-manager
-```bash
-kubectl create namespace cert-manager
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager --set installCRDs=true
-```
+chmod 600 ~/.ssh/deploy_key   (ec2 private key)
 
-## 9. Create AWS Credentials Secret for cert-manager
-```bash
-kubectl create secret generic route53-credentials-secret \
-  --namespace cert-manager \
-  --from-literal=aws_access_key_id=<YOUR_KEY_ID> \
-  --from-literal=aws_secret_access_key='<YOUR_SECRET_KEY>'
-```
+cat deploy_key.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys  (ec2 public key)
 
-## 10. Apply ClusterIssuer Configuration
-```bash
-nano cluster-issuer.yaml
-kubectl apply -f cluster-issuer.yaml
-```
-
-## 11. Install NGINX Ingress Controller via Helm
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace \
-  --set controller.ingressClass=nginx \
-  --set controller.ingressClassResource.name=nginx
-```
-
-## 12. Apply Ingress Resource
-```bash
-nano ingress.yaml
-kubectl apply -f ingress.yaml
-kubectl get ingress
-```
-
-## 13. Set A Record in Route 53
-Point your domain (e.g., `motivationapp.click`) to the Ingress `EXTERNAL-IP`.click to that IP via an A record.  
-
-## 14. check certificate Ready 'true'
-```bash
-kubectl get svc ingress-nginx-controller -n ingress-nginx    #check external ip / cname will be same
-nslookup web.motivationapp.click
-
-kubectl get certificate 
-```
-
-## 15. Access the Web Application
-```text
-https://web.motivationapp.click/
-```
-
-## 16. CI/CD  using github action 
-.github/workflows/deploy.yaml   #Create a GitHub Actions workflow
-Go to GitHub Repo > Settings > Secrets and variables > Actions > New repository secret, and add AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DOCKER_PASSWORD, DOCKER_USERNAME, EKS_CLUSTER_NAME, KUBE_CONFIG.
-
-## 17. Set Up Monitoring with Prometheus and Grafana
-```bash
-helm repo add stable https://charts.helm.sh/stable
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-kubectl create namespace prometheus
-helm install prometheus-stack prometheus-community/kube-prometheus-stack -n prometheus
-kubectl get pods -n prometheus
-kubectl get svc -n prometheus
-```
-
-## 18. Expose Prometheus and Grafana
-```bash
-kubectl edit svc prometheus-stack-kube-prom-prometheus -n prometheus
-kubectl edit svc prometheus-stack-grafana -n prometheus
-#change type to LoadBalancer
-```
-
-## 19. Access Grafana UI
-- Get LoadBalancer IP:
-  ```bash
-  kubectl get svc -n prometheus   #copy stable grafana cname and paste into the browser
-  ```
-- Open Grafana in browser
-- Login: `admin / prom-operator`
-
-## 20. Import Dashboards in Grafana
-| Metric Type   | Dashboard Name                        | ID     |
-|---------------|----------------------------------------|--------|
-| CPU & Memory  | Node Exporter Full                    | 1860   |
-| Request Count | Kubernetes Cluster Monitoring         | 6417   |
-| Error Rates   | API / Web Service Monitoring          | 11074  |
-
-## 21. Sample Prometheus Queries
-
-- **Memory Usage %**
-  ```promql
-  100 - ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)
-  ```
-
-- **Network Usage**
-  ```promql
-  rate(node_network_receive_bytes_total[5m])
-  ```
-
-- **CPU Usage %**
-  ```promql
-  100 - (avg by (instance)(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-  ```

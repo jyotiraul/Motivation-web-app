@@ -1,27 +1,43 @@
-name: CI/CD - Build & Deploy to Minikube
+name: Deploy to EC2 with Ansible
 
 on:
   push:
     branches:
-      - main  # or your deploy branch
+      - main
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy App via Ansible
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/motivation-web-app:latest ./app
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
 
-    - name: Push image to Docker Hub
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/motivation-web-app:latest
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook ansible/playbook.yml \
+            -i "${{ secrets.HOST }}," \
+            -u ${{ secrets.USER }} \
+            --private-key ~/.ssh/id_rsa
 
-    - name: Deploy to Kubernetes
-      run: |
-        kubectl set image deployment/motivation-web-app motivation-web-app=${{ secrets.DOCKER_USERNAME }}/motivation-web-app:latest
+      - name: Pull latest code on EC2 and restart Flask app
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+            git config --global --add safe.directory /opt/motivation-app
+            cd /opt/motivation-app
+            git pull origin main
+            sudo systemctl restart flaskapp
+          EOF
