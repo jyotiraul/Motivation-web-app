@@ -13,8 +13,9 @@ This guide walks through the deployment of a Flask web application using Terrafo
 
 ---
 
-## 📌 Project Structure
+## 📁 Project Structure
 
+```
 
 /home/ubuntu/
 ├── ansible/
@@ -23,6 +24,7 @@ This guide walks through the deployment of a Flask web application using Terrafo
 │   └── files/
 │       └── flaskapp.service
 
+```
 
 ---
 
