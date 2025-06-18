@@ -155,30 +155,12 @@ kubectl get po
 kubectl get svc
 ```
 
-## 6. Install NGINX Ingress Controller via Helm
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace \
-  --set controller.ingressClass=nginx \
-  --set controller.ingressClassResource.name=nginx
-```
-
-## 7. Apply Ingress Resource
-```bash
-nano ingress.yaml
-kubectl apply -f ingress.yaml
-kubectl get ingress
-```
-
-## 8. Use a custom domain with SSL 
+## 6. Use a custom domain with SSL 
 ```text
  Register a domain- Navigate to AWS Route 53, then go to Registered Domains and click on Register Domain Select domain and click on procced to checkout.
 ```
 
-## 9. Add cert-manager policy 
+## 7. Add cert-manager policy 
 ```bash
 { 
   "Version": "2012-10-17", 
@@ -197,7 +179,7 @@ kubectl get ingress
 } 
 ```
 
-## 10. Set Up SSL with Let's Encrypt and cert-manager
+## 8. Set Up SSL with Let's Encrypt and cert-manager
 ```bash
 kubectl create namespace cert-manager
 helm repo add jetstack https://charts.jetstack.io
@@ -206,7 +188,7 @@ helm install cert-manager jetstack/cert-manager \
   --namespace cert-manager --set installCRDs=true
 ```
 
-## 11. Create AWS Credentials Secret for cert-manager
+## 9. Create AWS Credentials Secret for cert-manager
 ```bash
 kubectl create secret generic route53-credentials-secret \
   --namespace cert-manager \
@@ -214,10 +196,28 @@ kubectl create secret generic route53-credentials-secret \
   --from-literal=aws_secret_access_key='<YOUR_SECRET_KEY>'
 ```
 
-## 12. Apply ClusterIssuer Configuration
+## 10. Apply ClusterIssuer Configuration
 ```bash
 nano cluster-issuer.yaml
 kubectl apply -f cluster-issuer.yaml
+```
+
+## 11. Install NGINX Ingress Controller via Helm
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx --create-namespace \
+  --set controller.ingressClass=nginx \
+  --set controller.ingressClassResource.name=nginx
+```
+
+## 12. Apply Ingress Resource
+```bash
+nano ingress.yaml
+kubectl apply -f ingress.yaml
+kubectl get ingress
 ```
 
 ## 13. Set A Record in Route 53
